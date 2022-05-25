@@ -1,4 +1,4 @@
-import { createGradient } from "./canvas";
+import { createGradient, getPositionFromColor } from "./canvas";
 import { createColor, createColorFromHsl } from "./color";
 import "./style.css";
 import { Color } from "./types";
@@ -8,7 +8,22 @@ const colorBar = <HTMLCanvasElement>document.getElementById("bar");
 const palletteCtx = colorPallette.getContext("2d");
 const barCtx = colorBar.getContext("2d");
 
-const generatePallette = (color: Color) => {
+const color = new Proxy(createColor(0, 0, 255), {
+  get: function (obj: Color, prop: keyof Color) {
+    return obj[prop];
+  },
+  set: function (obj: Color, prop: keyof Color, value: number) {
+    obj[prop] = value;
+    generatePallette();
+    return true;
+  },
+  deleteProperty: function (obj: Color, prop: keyof Color) {
+    delete obj[prop];
+    return true;
+  },
+});
+
+const generatePallette = () => {
   if (palletteCtx) {
     const { width, height } = palletteCtx.canvas;
     palletteCtx.clearRect(0, 0, width, height);
@@ -42,23 +57,34 @@ if (barCtx) {
   barCtx.fillRect(0, 0, width, height);
 }
 
-colorPallette.addEventListener("click", ($e: MouseEvent) => {
-  const x = $e.offsetX;
-  const y = $e.offsetY;
-  if (palletteCtx) {
-    const pixel = palletteCtx.getImageData(x, y, 1, 1)["data"]; // Read pixel Color
-    document.body.style.background = `rgb(${pixel[0]},${pixel[1]},${pixel[2]})`;
-  }
-});
+// colorPallette.addEventListener("click", ($e: MouseEvent) => {
+//   const x = $e.offsetX;
+//   const y = $e.offsetY;
+//   if (palletteCtx) {
+//     const pixel = palletteCtx.getImageData(x, y, 1, 1)["data"]; // Read pixel Color
+//     document.body.style.background = `rgb(${pixel[0]},${pixel[1]},${pixel[2]})`;
 
-colorBar.addEventListener("click", ($e: MouseEvent) => {
-  const x = $e.offsetX;
-  const y = $e.offsetY;
-  if (barCtx) {
-    const pixel = barCtx.getImageData(x, y, 20, 300)["data"];
-    const _color = createColor(pixel[0], pixel[1], pixel[2]);
-    generatePallette(_color);
-  }
-});
+//     const [xq, yq] = getPositionFromColor(
+//       palletteCtx,
+//       createColor(pixel[0], pixel[1], pixel[2])
+//     );
+//     palletteCtx.beginPath();
+//     palletteCtx.arc(xq, yq, 8, 0, 2 * Math.PI, false);
+//     palletteCtx.lineWidth = 5;
+//     palletteCtx.strokeStyle = "#000";
+//     palletteCtx.stroke();
+//   }
+// });
 
-generatePallette(createColor(0, 0, 255));
+// colorBar.addEventListener("click", ($e: MouseEvent) => {
+//   const x = $e.offsetX;
+//   const y = $e.offsetY;
+//   if (barCtx) {
+//     const pixel = barCtx.getImageData(x, y, 1, 1)["data"];
+//     color.red = pixel[0];
+//     color.green = pixel[1];
+//     color.blue = pixel[2];
+//   }
+// });
+
+generatePallette();
